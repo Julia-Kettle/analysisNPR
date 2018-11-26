@@ -26,7 +26,35 @@ void  readConfigs(std::string filestem, std::string groupLabel, std::vector<int>
     }
 }
 
+// overload read for int and vector int
+void read(Grid::XmlReader &reader,std::string name, int &output)
+{
+    std::string tmp;
+    read(reader,name,tmp);
+    output = stoi(tmp);
+}
 
+void read(Grid::XmlReader &reader,std::string name, std::vector<int> &output)
+{
+    std::string tmp;
+    read(reader,name,tmp);
+    std::stringstream iss( tmp );
+    int number;
+    output.resize(0);
+    while( iss >> number )
+    {
+        output.push_back(number);
+    }
+}
+
+
+template <typename T>
+T parseParam(Grid::XmlReader &reader,const std::string &label) 
+{
+    T data;
+    read(reader, label, data);
+    return data;
+}
 
 
 #endif

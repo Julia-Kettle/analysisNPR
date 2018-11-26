@@ -10,18 +10,17 @@
 #include <complex>
 #include "distribution.h"
 
-using namespace Grid;
-using namespace QCD;
-
-
 ////////////////////////////////////////////////////
 // Invert the volume averaged propogators
 // Rewrite as 12x12 matrix for inverting 
 // then restructure as spin-colour matrix after
 ////////////////////////////////////////////////////
-SpinColourMatrix invert(SpinColourMatrix sc_matrix)
+Grid::QCD::SpinColourMatrix invert(Grid::QCD::SpinColourMatrix sc_matrix)
 {
-    SpinColourMatrix sc_matrixInv;
+    int Ns(Grid::QCD::Ns);
+    int Nc(Grid::QCD::Nc);
+    
+    Grid::QCD::SpinColourMatrix sc_matrixInv;
     Eigen::MatrixXcd matrix = Eigen::MatrixXcd::Zero(Ns*Nc,Ns*Nc);
 
     // convet spincolourmatrix into eigen matrix     
@@ -57,28 +56,28 @@ SpinColourMatrix invert(SpinColourMatrix sc_matrix)
 
 ///////// Inversion for distributions //////////////
 ///////// wrapper for invert above    /////////////
-Distribution<SpinColourMatrix> invert(Distribution<SpinColourMatrix> dist_scmat)
+Distribution<Grid::QCD::SpinColourMatrix> invert(Distribution<Grid::QCD::SpinColourMatrix> dist_scmat)
 {
-    std::vector<SpinColourMatrix> vec_Inv;
+    std::vector<Grid::QCD::SpinColourMatrix> vec_Inv;
     vec_Inv.reserve(dist_scmat.get_values().size());
     for ( auto scmat : dist_scmat.get_values() )
     {
         vec_Inv.push_back(invert(scmat));
     }
-    return Distribution<SpinColourMatrix>(vec_Inv);
+    return Distribution<Grid::QCD::SpinColourMatrix>(vec_Inv);
 }
 
 ///////////////////////////////////////////////
 //Amputation code ( no projection in this function )
 // S-1 V S
 //////////////////////////////////////////////
-std::vector<Distribution<SpinColourMatrix>> amputate(Distribution<SpinColourMatrix> prop1, Distribution<SpinColourMatrix> prop2, std::vector<Distribution<SpinColourMatrix>> vertex)
+std::vector<Distribution<Grid::QCD::SpinColourMatrix>> amputate(Distribution<Grid::QCD::SpinColourMatrix> prop1, Distribution<Grid::QCD::SpinColourMatrix> prop2, std::vector<Distribution<Grid::QCD::SpinColourMatrix>> vertex)
 {
     //invert propagators
     auto propInv1 = invert(prop1);
     auto propInv2 = invert(prop2);
     // set up vector to hold amputated result
-    std::vector<Distribution<SpinColourMatrix>> amputated;
+    std::vector<Distribution<Grid::QCD::SpinColourMatrix>> amputated;
 
     // loop through the gammas in the vertex
     for ( auto gamma : vertex )
@@ -96,27 +95,43 @@ std::vector<Distribution<SpinColourMatrix>> amputate(Distribution<SpinColourMatr
 // A  - 1/48 Tr ( LambdaA^mu * gmu * g5 )
 /////////////////////////////////////////////////////////////////////////
 template <typename T>
-auto project_gamma(std::vector<T> amp_vertex, std::vector<Gamma::Algebra> gamma_indices)
+Distribution<Grid::Real> project_gamma(std::vector<Distribution<T>> amp_vertex, std::vector<Grid::QCD::Gamma::Algebra> gamma_indices)
 {
     
-    //std::vector<Gamma::Algebra> gmu = {Gamma::Algebra::GammaT, Gamma::Algebra::GammaX, Gamma::Algebra::GammaY, Gamma::Algebra::GammaZ};
-    //std::vector<Gamma::Algebra> gmug5 = {Gamma::Algebra::GammaTGamma5, Gamma::Algebra::GammaXGamma5, Gamma::Algebra::GammaYGamma5, Gamma::Algebra::GammaZGamma5}
-
-
-    Distribution<ComplexD> tr;
+    Distribution<Grid::QCD::ComplexD> tr;
     for (int mu=0;mu<gamma_indices.size();mu++)
     {
         auto gi = gamma_indices[mu];
         if( mu == 0)
         {
-            tr = trace( amp_vertex[gi] * Gamma(gi) ); 
+            tr = trace( amp_vertex[gi] * Grid::QCD::Gamma(gi) ); 
         }
         else
         {
-            tr = tr +  trace( amp_vertex[gi] * Gamma(gi) );
+            tr = tr +  trace( amp_vertex[gi] * Grid::QCD::Gamma(gi) );
         }
     }
-    return tr*(1/(12.0*gamma_indices.size()));
+    return real(tr*(1/(12.0*gamma_indices.size())));
+}
+
+template <typename T>
+Grid::RealD project_gamma(std::vector<T> amp_vertex, std::vector<Grid::QCD::Gamma::Algebra> gamma_indices)
+{
+    
+    Grid::QCD::ComplexD tr;
+    for (int mu=0;mu<gamma_indices.size();mu++)
+    {
+        auto gi = gamma_indices[mu];
+        if( mu == 0)
+        {
+            tr = trace( amp_vertex[gi] * Grid::QCD::Gamma(gi) ); 
+        }
+        else
+        {
+            tr = tr +  trace( amp_vertex[gi] * Grid::QCD::Gamma(gi) );
+        }
+    }
+    return real(tr*(1/(12.0*gamma_indices.size())));
 }
 
 
@@ -128,7 +143,7 @@ auto project_gamma(std::vector<T> amp_vertex, std::vector<Gamma::Algebra> gamma_
 // A  - 1/12q^2 Tr ( qmu * LambdaA^mu * g5 * qslash )
 /////////////////////////////////////////////////////////////////////////
 template <typename T>
-auto project_qslash(std::vector<T> amp_vertex, std::vector<double> q, std::vector<Gamma::Algebra> gamma_indices)
+Distribution<Grid::Real> project_qslash(std::vector<Distribution<T>> amp_vertex, std::vector<double> q, std::vector<Grid::QCD::Gamma::Algebra> gamma_indices)
 {
    
     //// qsq ///////////////////////////////////
@@ -141,20 +156,53 @@ auto project_qslash(std::vector<T> amp_vertex, std::vector<double> q, std::vecto
     //// Trace ///////////////////////////////////
     // needed only for V and A
     // q[mu] and qsq s cancel for P and S, but can just use the gamma scheme
-    Distribution<ComplexD> tr;
+    Distribution<Grid::QCD::ComplexD> tr;
     for(int mu=0;mu<gamma_indices.size();mu++)
     {
         auto gi = gamma_indices[mu];
         if(mu==0)
         {
-            tr = trace( q[mu] * amp_vertex[gi] * Gamma(gi) * q[mu] );
+            tr = trace( q[mu] * amp_vertex[gi] * Grid::QCD::Gamma(gi) * q[mu] );
         } 
         else 
         {
-            tr = tr +  trace( q[mu] * amp_vertex[gi] * Gamma(gi) * q[mu] );
+            tr = tr +  trace( q[mu] * amp_vertex[gi] * Grid::QCD::Gamma(gi) * q[mu] );
         }
     }
-    return tr*(1/(12.0*qsq));
+    return real(tr*(1/(12.0*qsq)));
 }
+
+template <typename T>
+Grid::Real project_qslash(std::vector<T> amp_vertex, std::vector<double> q, std::vector<Grid::QCD::Gamma::Algebra> gamma_indices)
+{
+   
+    //// qsq ///////////////////////////////////
+    double qsq = 0;
+    for(int mu=0;mu<gamma_indices.size();mu++)
+    {
+        qsq += q[mu]*q[mu];
+    }
+
+    //// Trace ///////////////////////////////////
+    // needed only for V and A
+    // q[mu] and qsq s cancel for P and S, but can just use the gamma scheme
+    Grid::QCD::ComplexD tr;
+    std::cout << "tr - " << tr.get_values() << std::endl;
+    for(int mu=0;mu<gamma_indices.size();mu++)
+    {
+        auto gi = gamma_indices[mu];
+        if(mu==0)
+        {
+            tr = trace( q[mu] * amp_vertex[gi] * Grid::QCD::Gamma(gi) * q[mu] );
+        } 
+        else 
+        {
+            tr = tr +  trace( q[mu] * amp_vertex[gi] * Grid::QCD::Gamma(gi) * q[mu] );
+        }
+    }
+    return real(tr*(1/(12.0*qsq)));
+}
+
+
 
 #endif

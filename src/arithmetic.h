@@ -96,4 +96,16 @@ std::vector<T> operator /( std::vector<T> a,  S b)
     return c;
 }
 
+// convert vec to reals
+std::vector<Grid::Real> real(std::vector<Grid::ComplexD> comp_vec)
+{
+    std::vector<Grid::Real> reals;
+    for( auto elem : comp_vec )
+    {
+        reals.push_back(real(elem));
+    }
+    return reals;
+}
+
+
 #endif

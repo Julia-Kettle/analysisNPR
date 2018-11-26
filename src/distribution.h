@@ -1,9 +1,11 @@
 #ifndef DISTRIBUTION_H
 #define DISTRIBUTION_H
 
+#include <algorithm>
 #include "Grid/Grid.h"
 #include "arithmetic.h"
 #include "utils.h"
+#include <cmath>
 
 /* Distribution.h
  * Julia Kettle Nov 2018
@@ -30,33 +32,39 @@ class Distribution
         std::vector<T>  values;
         size_t          Nmeas;
         T               mean;
+        std::string     resampling; // "jackknife", "bootstrap" or "none"
 
     public:
         // Constructors
         Distribution(){}; 
         Distribution(std::vector<T> values);
+        Distribution(std::vector<T> values, std::string resampling);
         
         // return functions
         std::vector<T>  get_values(){ return this->values; }
         T               get_value(int index){ return this->values[index]; }
         T               get_mean(){ return this->mean; }
         size_t          get_Nmeas(){ return this->Nmeas; }
+        // These may not work for certain types
+        T               get_hi();
+        T               get_std();
+        T               get_lo(); 
 
         // resampling
         Distribution<T> jackknife();
 
         //operator overloading 
         //Dist<T> op Dist<T>
-        Distribution <T> operator + (Distribution<T> obj2){ return Distribution(this->values+obj2.values); }
-        Distribution <T> operator - (Distribution<T> obj2){ return Distribution(this->values-obj2.values); }
-        Distribution <T> operator * (Distribution<T> obj2){ return Distribution(this->values*obj2.values); }
+        Distribution <T> operator + (Distribution<T> obj2){ return Distribution(this->values+obj2.values,this->resampling); }
+        Distribution <T> operator - (Distribution<T> obj2){ return Distribution(this->values-obj2.values,this->resampling); }
+        Distribution <T> operator * (Distribution<T> obj2){ return Distribution(this->values*obj2.values,this->resampling); }
         //Dist<T> op V 
         template <typename V>
-        auto operator + (V obj2){ return Distribution(this->values + obj2); }
+        auto operator + (V obj2){ return Distribution(this->values + obj2,this->resampling); }
         template <typename V>
-        auto operator - (V obj2){ return Distribution(this->values - obj2); }
+        auto operator - (V obj2){ return Distribution(this->values - obj2,this->resampling); }
         template <typename V>
-        auto operator * (V obj2){ return Distribution(this->values * obj2); }
+        auto operator * (V obj2){ return Distribution(this->values * obj2,this->resampling); }
         
 };
 
@@ -66,11 +74,21 @@ Distribution<T>::Distribution(std::vector<T> dist)
 {
     values  = dist;
     Nmeas   = values.size();
-
     mean = zero(values);  // Need to make this zero
     for(auto value : values){ mean=mean+value*(1.0/values.size()); }
+    resampling = "none";
 }
 
+template<class T>
+Distribution<T>::Distribution(std::vector<T> dist, std::string sampleType)
+{
+    values  = dist;
+    resampling = sampleType;
+    // if resampled then the last value of distribution is the central value - not really part of the dist. 
+    (resampling == "none") ? Nmeas   = values.size() : Nmeas = values.size()-1; 
+    mean = zero(values);  // Need to make this zero
+    for(int i=0; i<Nmeas; i++){ mean=mean+values[i]*(1.0/Nmeas); }
+}
 
 ////////////////jackknife resamples/////////////////////
 // Sample = value[i] ; i=0->N
@@ -86,12 +104,39 @@ Distribution<T> Distribution<T>::jackknife()
 
     for (int i=0;i<Nmeas;i++)
     {
-        resampled_means[i] = mean - values[i];
-        resampled_means[i] = resampled_means[i]*(double(Nmeas)/double(Nmeas-1));
+        resampled_means[i] = mean*(double(Nmeas)) - values[i];
+        resampled_means[i] = resampled_means[i]*(1/double(Nmeas-1));
     }
     resampled_means.back() = mean;
-    return Distribution<T>(resampled_means);
+    return Distribution<T>(resampled_means,"jackknife");
     //return jk;
+}
+
+template <class T>
+T Distribution<T>::get_hi()
+{
+    return std::max_element(values.begin(),values.end());
+}
+
+template <class T>
+T Distribution<T>::get_lo()
+{
+    return std::min_element(values.begin(),values.end());
+}
+
+template <class T>
+T Distribution<T>::get_std()
+{
+    int factor;
+    (resampling == "jackknife") ? factor = this->Nmeas - 1 : 1;
+    T std;
+    for ( auto elem : this->values )
+    {
+        std += (elem - this->mean)*(elem - this->mean);
+    }
+    std *= ( double(factor) / this->Nmeas);
+    std  = sqrt(std);
+    return std;
 }
 
 /* Non class functions 
@@ -103,12 +148,13 @@ Distribution<T> Distribution<T>::jackknife()
 /////////////////////////////// Zeros for different data types ///////////////////////////////////
 Grid::QCD::ComplexD zero(std::vector<Grid::QCD::ComplexD> values){ return Grid::QCD::ComplexD(0.0,0.0); }
 
+Grid::Real zero(std::vector<Grid::Real> values){ return 0; }
+
 template <typename T>
 T zero(std::vector<T> values){ return Grid::QCD::zero; }
 
 template <typename T>
 std::vector<T> zero(std::vector<std::vector<T>> values){ return std::vector<T>(values[0].size(),Grid::QCD::zero); }
-
 
 /////////////////////////////////// Operator Overloading ( left-wise ) /////////////////////////////////////////
 
@@ -121,6 +167,10 @@ Distribution<T> operator + (V lhs, Distribution<T> rhs){ return Distribution<T>(
 
 template<typename T, typename V>
 Distribution<T> operator - (V lhs, Distribution<T> rhs){ return Distribution<T>(lhs+rhs.get_values()); }
+
+////////////////////////////////////// Define conversion to Real for distribution ///////////////////////
+template<typename T>
+Distribution<Grid::Real> real(Distribution<T> dist){ return Distribution<Grid::Real>(real(dist.get_values())); } 
 
 /////////////////////////////Vector of Distributions///////////////////////////////////
 // method to create vector of distribution from vector (configs) of vector (gammas)

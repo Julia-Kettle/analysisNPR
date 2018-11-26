@@ -8,11 +8,11 @@ MPICXX=mpiicpci
 
 
 #CXX       := $(shell grid-config --cxx)
-CXXFLAGS  := $(shell grid-config --cxxgflags) -I$(GRIDBASE)/include 
+CXXFLAGS  := $(shell grid-config --cxxflags) -I$(GRIDBASE)/include 
 LDLIBS    := $(shell grid-config --libs)    -lGrid 
 LDFLAGS   := $(shell grid-config --ldflags) -L$(GRIDBASE)/lib 
 
-TARGET ?= main
+TARGET ?= bilinearAnalysis
 SRC_DIRS ?= ../src
 
 SRCS := $(shell find $(SRC_DIRS) -name *.cc -or -name *.c -or -name *.s)
