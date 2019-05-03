@@ -1,0 +1,11 @@
+#ifndef ANALYSISNPR_H
+#define ANALYSISNPR_H
+
+#include <io.h>
+#include <utils/utils.h>
+#include <utils/arithmetic.h>
+#include <distribution/distribution.h>
+#include <distribution/utils.h>
+#include <distribution/arithmetic.h>
+
+#endif
