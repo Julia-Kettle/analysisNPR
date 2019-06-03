@@ -10,6 +10,7 @@
 #include <fit_functions.h>
 #include <global.h>
 #include <my_dirac.h>
+#include <convert.h>
 
 #endif
 

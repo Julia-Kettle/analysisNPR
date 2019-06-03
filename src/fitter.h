@@ -161,7 +161,7 @@ fprintf (stderr, "status = %s\n", gsl_strerror (status));
 
 
 // hacky jackknife fitter surely a more efficient way
-class JackKnifeFitter
+class DistributionFitter
 {
     private:
         std::vector<Fitter>                 fitters;
@@ -178,7 +178,7 @@ class JackKnifeFitter
 
         double          (*function)(const gsl_vector *, double);
     public:
-        JackKnifeFitter(Distribution<std::vector<double>> y, std::vector<double> x);
+        DistributionFitter(Distribution<std::vector<double>> y, std::vector<double> x);
         void assignFitFunction( int (*f)(const gsl_vector *, void *, gsl_vector *),  int(*df)(const gsl_vector *, void *, gsl_matrix *), double(*func)(const gsl_vector *, double), std::vector<double> p_init );
         void fitAll();
         void fit(int i);
@@ -193,7 +193,7 @@ class JackKnifeFitter
 };
 
 
-JackKnifeFitter::JackKnifeFitter(Distribution<std::vector<double>> y, std::vector<double> x)
+DistributionFitter::DistributionFitter(Distribution<std::vector<double>> y, std::vector<double> x)
 {
     // Create vector of structs and fitters
     nSamples = y.get_values().size();
@@ -216,7 +216,7 @@ JackKnifeFitter::JackKnifeFitter(Distribution<std::vector<double>> y, std::vecto
     params.resize(nSamples);
 }
 
-void JackKnifeFitter::assignFitFunction( int (*f)(const gsl_vector *, void *, gsl_vector *), int(*df)(const gsl_vector *, void *, gsl_matrix *), double(*func)(const gsl_vector *, double), std::vector<double> p_init )
+void DistributionFitter::assignFitFunction( int (*f)(const gsl_vector *, void *, gsl_vector *), int(*df)(const gsl_vector *, void *, gsl_matrix *), double(*func)(const gsl_vector *, double), std::vector<double> p_init )
 {
     nParams = p_init.size();
     for (int i=0;i<nSamples;i++)
@@ -229,12 +229,12 @@ void JackKnifeFitter::assignFitFunction( int (*f)(const gsl_vector *, void *, gs
     function = func;
 }
 
-void JackKnifeFitter::fit(int i)
+void DistributionFitter::fit(int i)
 {
     fitters[i].minimise();
 }
 
-void JackKnifeFitter::fitAll()
+void DistributionFitter::fitAll()
 {
     for (int i=0; i<nSamples; i++)
     {
@@ -248,7 +248,7 @@ void JackKnifeFitter::fitAll()
     }
 }
 
-std::vector<double>  JackKnifeFitter::extrapolate(double x0)
+std::vector<double>  DistributionFitter::extrapolate(double x0)
 {
     std::vector<double> extrap_vector;
     for (int i=0; i<nSamples; i++)

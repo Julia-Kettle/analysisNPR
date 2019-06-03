@@ -165,7 +165,7 @@ Eigen::MatrixXd projectFourQuark(Grid::QCD::SpinColourMatrix prop1, Grid::QCD::S
 
 Distribution<Eigen::MatrixXd> projectFourQuark(Distribution<Grid::QCD::SpinColourMatrix> prop1, Distribution<Grid::QCD::SpinColourMatrix> prop2, Distribution<std::vector<Grid::QCD::SpinColourSpinColourMatrix>> vertices, std::vector<DiracStructure> vertex_structure,std::vector<DiracStructure> projector, std::vector<bool> colourMix)
 {
-    int nSamples = prop1.get_Nmeas();
+    int nSamples = prop1.size();
     std::vector<Eigen::MatrixXd> trace(nSamples,Eigen::MatrixXd(vertex_structure.size(),projector.size()));
     trace.reserve(nSamples);
 
@@ -179,7 +179,7 @@ Distribution<Eigen::MatrixXd> projectFourQuark(Distribution<Grid::QCD::SpinColou
 
 Distribution<Real> projectFourQuark(Distribution<Grid::QCD::SpinColourMatrix> prop1, Distribution<Grid::QCD::SpinColourMatrix> prop2, Distribution<std::vector<Grid::QCD::SpinColourSpinColourMatrix>> vertices, DiracStructure vertex_structure,DiracStructure projector, bool colourMix)
 {
-    int nSamples = prop1.get_Nmeas();
+    int nSamples = prop1.size();
 
     std::vector<Real> trace;
     trace.reserve(nSamples);

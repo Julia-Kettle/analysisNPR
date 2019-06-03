@@ -71,14 +71,32 @@ int main(int argc, char *argv[])
     // get vector of distributions
     vertex_funcs = get_vector_distributions(bilin);
 
-    //get jackknifes    
-    Distribution<SpinColourMatrix>              Sin_jk    =   Sin.jackknife();
-    Distribution<SpinColourMatrix>              Sout_jk   =   Sout.jackknife();
-    std::vector<Distribution<SpinColourMatrix>> vf_jk     =   get_vector_jackknife(vertex_funcs);
+    std::vector<Distribution<SpinColourMatrix>> vf;
+
+    std::cout << Sin.get_Nmeas() << " " << Sout.get_Nmeas() << std::endl;
+    std::cout << trace(Sin.get_values()).get_values() << " " << trace(Sout.get_values()).get_values() << std::endl;
+    if(bootstraps > 0)
+    {
+        Sin    =   Sin.bootstrap(bootstraps);
+        Sout   =   Sout.bootstrap(bootstraps);
+        vf     =   get_vector_resample(vertex_funcs,"bootstrap",bootstraps);
+    }
+    else
+    {
+        Sin    =   Sin.jackknife();
+        Sout   =   Sout.jackknife();
+        vf     =   get_vector_resample(vertex_funcs,"jackknife");
+    }
+
+    std::cout << Sin.get_Nmeas() << " " << Sout.get_Nmeas() << std::endl;
+    std::cout << trace(Sin.get_values()).get_values() << " " << trace(Sout.get_values()).get_values() << std::endl;
+
 
     //amputate the vertices
-    auto amp  = amputate(Sout,Sin,vertex_funcs);
-   
+    auto amp  = amputate(Sout,Sin,vf);
+
+    std::cout << trace(amp[0].get_values()).get_values() << std::endl;   
+
     /* 
     // set gamma indices for projection - S,P,V,A
     std::vector<Gamma::Algebra> I     = {Gamma::Algebra::Identity};
@@ -101,25 +119,11 @@ int main(int argc, char *argv[])
     Distribution<Real> LambdaVq = project_qslash(amp,q,gmu);
     Distribution<Real> LambdaAq = -1*project_qslash(amp,q,gmug5);
 
-    // get jackknives / bootstraps
-    if(bootstraps > 0)
-    {
-        LambdaS  = LambdaS.bootstrap(bootstraps);
-        LambdaP  = LambdaP.bootstrap(bootstraps);
-        LambdaV  = LambdaV.bootstrap(bootstraps);
-        LambdaA  = LambdaA.bootstrap(bootstraps);
-        LambdaT  = LambdaT.bootstrap(bootstraps);
-        LambdaVq = LambdaVq.bootstrap(bootstraps);
-        LambdaAq = LambdaAq.bootstrap(bootstraps);
-    }else{
-        LambdaS  = LambdaS.jackknife();
-        LambdaP  = LambdaP.jackknife();
-        LambdaV  = LambdaV.jackknife();
-        LambdaA  = LambdaA.jackknife();
-        LambdaT  = LambdaT.jackknife();
-        LambdaVq = LambdaVq.jackknife();
-        LambdaAq = LambdaAq.jackknife();
-    }
+    /////////////////// Also take Lambda A/S  - Lambda V/P //////////////////
+    save_result<std::vector<double>>(output_dir+"/LambdaSmPg.h5","LambdaSmPg",LambdaS.get_values()-LambdaP.get_values()); 
+    save_result<std::vector<double>>(output_dir+"/LambdaVmAg.h5","LambdaVmAg",LambdaV.get_values()-LambdaA.get_values()); 
+    save_result<std::vector<double>>(output_dir+"/LambdaVmAq.h5","LambdaVmAq",LambdaVq.get_values()-LambdaAq.get_values()); 
+
 
     double qsq=0;
     for (int mu=0;mu<q.size();mu++){ qsq += pow(q[mu],2); }

@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
             std::vector<std::string> vertices;
             if (data_type == "bilinear")
             {
-                vertices  = std::vector<std::string>({"Sg","Pg","Vg","Ag","Vq","Aq"});
+                vertices  = std::vector<std::string>({"Sg","Pg","Vg","Ag","Tg","Vq","Aq"});
             }
             else
             {

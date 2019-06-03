@@ -138,6 +138,26 @@ int main(int argc, char *argv[])
     Distribution<double>                                    lambda_a(tmp_lambdaA,resampling);
     std::cout << "distributions set up" << std::endl;
        
+    if(resampling == "bootstrap")
+    {
+        Sin     = Sin.bootstrap(bootstraps);
+        Sout    = Sout.bootstrap(bootstraps);
+        vertex  = vertex.bootstrap(bootstraps);
+    }
+    else if(resampling == "jackknife")
+    {
+        Sin     = Sin.jackknife();
+        Sout    = Sout.jackknife();
+        vertex  = vertex.jackknife();
+    }
+    std::cout << "dist lenght = " << vertex.get_values().size() <<  " " <<  Sin.get_values().size() << " " << Sout.get_values().size() << std::endl;
+    std::cout << trace(vertex.get_values().back()[0]) << std::endl;
+    std::cout << trace(Sin.get_values().back()) << std::endl;
+    std::cout << trace(Sout.get_values().back()) << std::endl;
+    //std::vector<Distribution<SpinColourSpinColourMatrix>> 
+    //auto vertex = get_vector_resample(get_vector_distributions(fourQ),resampling,bootstraps);
+    
+
     //////////////////////////////////////////////////////////
     // Perform the projections on tree to get F and invert 
     //////////////////////////////////////////////////////////
@@ -192,13 +212,15 @@ int main(int argc, char *argv[])
     std::cout << "vertex projected" << std::endl;
     std::cout << lambda.get_value(0) << std::endl;
     
+    std::cout << "length lambda = " << lambda.get_values().size() << std::endl;
+
     //////////////////////////////////////////////////////////
     // Normalise and jackknife the projected vertices
     //////////////////////////////////////////////////////////
     Distribution<Eigen::MatrixXd> lambda_norm = lambda*treeInv;
-    (resampling == "jackknife") ? lambda_norm = lambda_norm.jackknife() : lambda_norm = lambda_norm.bootstrap(bootstraps);
     std::cout << lambda_norm.get_mean() << std::endl;
     std::cout << "normalisation and jk done" << std::endl;
+    std::cout << "length lambda_norm = " << lambda_norm.get_values().size() << std::endl;
 
     //////////////////////////////////////////////////////////
     // Divide by Lambda_(A/V) 
@@ -242,7 +264,8 @@ int main(int argc, char *argv[])
     
     //////////////////////////////////////////////////////////
     // write the results to file
-    //////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////
+   
     for(int i=0;i<lambdaNorm_matrix.size();i++)
     for(int j=0;j<lambdaNorm_matrix[0].size();j++)
     {
@@ -253,6 +276,8 @@ int main(int argc, char *argv[])
         save_result<std::vector<double>>(output_dir+"/Z"+std::to_string(i)+std::to_string(j)+scheme+schemeZV+"_Vsq.h5","Z"+std::to_string(i)+std::to_string(j)+scheme+schemeZV+"_Vsq",Zij_v_matrix[i][j].get_values());
         save_result<std::vector<double>>(output_dir+"/Z"+std::to_string(i)+std::to_string(j)+scheme+schemeZV+"_Asq.h5","Z"+std::to_string(i)+std::to_string(j)+scheme+schemeZV+"_Asq",Zij_a_matrix[i][j].get_values());
         save_result<std::vector<double>>(output_dir+"/Z"+std::to_string(i)+std::to_string(j)+scheme+schemeZV+"_aveVAsq.h5","Z"+std::to_string(i)+std::to_string(j)+scheme+schemeZV+"_aveVAsq",Zij_av_matrix[i][j].get_values());
+
+
     }
 
      

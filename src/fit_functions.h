@@ -448,6 +448,65 @@ double inv_polysq(const gsl_vector *p, double x0)
 }
 
 /*************************** A + B*p^2 + C/p^2  *****************************/
+int psq_psix_psq_inv_psix_inv_f(const gsl_vector *p, void *data, gsl_vector *f)
+{
+    //unpack data from struct
+    size_t n    =   ((struct DataSet*)data)->n;
+    std::vector<double> x   =   ((struct DataSet*)data)->x;
+    std::vector<double> y   =   ((struct DataSet*)data)->y;
+
+    // get parameters
+    double p0 = gsl_vector_get(p,0);
+    double p1 = gsl_vector_get(p,1);
+    double p2 = gsl_vector_get(p,2);
+    double p3 = gsl_vector_get(p,3);
+    double p4 = gsl_vector_get(p,4);
+
+    //calculate model value and put residual into gsl vector
+    for ( size_t i=0; i < n; i++)
+    {
+        double Yi = p0 + p1*pow(x[i],2) + p2/pow(x[i],2) + p3*pow(x[i],6) + p4/(x[i],6);
+        gsl_vector_set (f, i, Yi - y[i]);
+    }
+    return GSL_SUCCESS;
+}
+
+//derivative
+int psq_psix_psq_inv_psix_inv_df(const gsl_vector *p, void *data, gsl_matrix *J)
+{
+    //unpack data from struct
+    size_t n    =   ((struct DataSet*)data)->n;
+    std::vector<double> x   =   ((struct DataSet*)data)->x;
+    std::vector<double> y   =   ((struct DataSet*)data)->y;
+
+
+    //Jacobian matrix J(i,j) = dfi * dpj
+    // fi = (Yi - yi)*sigma[i]
+    for ( size_t i=0; i<n; i++ )
+    {
+        gsl_matrix_set(J,i,0,1.0);
+        gsl_matrix_set(J,i,1,1.0*pow(x[i],2));
+        gsl_matrix_set(J,i,2,1.0/pow(x[i],2));
+        gsl_matrix_set(J,i,3,1.0*pow(x[i],6));
+        gsl_matrix_set(J,i,4,1.0/pow(x[i],6));
+    }
+    return GSL_SUCCESS;
+}
+
+//plain function
+double psq_psix_psq_inv_psix_inv(const gsl_vector *p, double x0)
+{
+    // get parameters
+    double p0 = gsl_vector_get(p,0);
+    double p1 = gsl_vector_get(p,1);
+    double p2 = gsl_vector_get(p,2);
+    double p3 = gsl_vector_get(p,3);
+    double p4 = gsl_vector_get(p,4);
+
+    return p0 + p1*pow(x0,2) + p2/pow(x0,2) + p3*pow(x0,6) + p4/pow(x0,6);
+}
+
+/*************************** A + B*p^2 + C/p^2  *****************************/
 int psq_psq_inv_f(const gsl_vector *p, void *data, gsl_vector *f)
 {
     //unpack data from struct
@@ -500,6 +559,59 @@ double psq_psq_inv(const gsl_vector *p, double x0)
     return p0 + p1*pow(x0,2) + p2/pow(x0,2);
 }
 
+
+/*************************** A + B*x  *****************************/
+int linear_f(const gsl_vector *p, void *data, gsl_vector *f)
+{
+    //unpack data from struct
+    size_t n    =   ((struct DataSet*)data)->n;
+    std::vector<double> x   =   ((struct DataSet*)data)->x;
+    std::vector<double> y   =   ((struct DataSet*)data)->y;
+
+    // get parameters
+    double p0 = gsl_vector_get(p,0);
+    double p1 = gsl_vector_get(p,1);
+
+    //calculate model value and put residual into gsl vector
+    for ( size_t i=0; i < n; i++)
+    {
+        double Yi = p0 + p1*x[i];
+        gsl_vector_set (f, i, Yi - y[i]);
+    }
+    return GSL_SUCCESS;
+}
+
+//derivative
+int linear_df(const gsl_vector *p, void *data, gsl_matrix *J)
+{
+    //unpack data from struct
+    size_t n    =   ((struct DataSet*)data)->n;
+    std::vector<double> x   =   ((struct DataSet*)data)->x;
+    std::vector<double> y   =   ((struct DataSet*)data)->y;
+
+
+    //Jacobian matrix J(i,j) = dfi * dpj
+    // fi = (Yi - yi)*sigma[i]
+    for ( size_t i=0; i<n; i++ )
+    {
+        gsl_matrix_set(J,i,0,1.0);
+        gsl_matrix_set(J,i,1,x[i]);
+    }
+    return GSL_SUCCESS;
+}
+
+//plain function
+double linear(const gsl_vector *p, double x0)
+{
+    // get parameters
+    double p0 = gsl_vector_get(p,0);
+    double p1 = gsl_vector_get(p,1);
+
+    return p0 + p1*x0;
+}
+
+
+//Should really change these to take psq as input
 
 //Should really change these to take psq as input
 

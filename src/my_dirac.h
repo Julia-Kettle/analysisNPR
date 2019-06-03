@@ -86,11 +86,40 @@ std::vector<DiracStructure> qslash_basis(std::vector<double> p1, std::vector<dou
         p1dotp2+=p1[i]*p2[i];
     }
 
+    //qslash
+    SpinMatrix qslash;
+    for(int i=0;i<4;i++)
+    {
+        SpinMatrix Grho;
+        Grho = Grho+ Complex(1,0);
+        qslash = qslash + (Grho*Grid::QCD::Gamma(gmu[i]))*q[i];
+    }
+    
+    int count=0;
+    SpinMatrix psigp;
+    for(int i=0;i<Nd;i++)
+    {
+        for(int j=i+1;j<Nd;j++)
+        {
+        SpinMatrix Grho;
+        Grho = Grho+ Complex(1,0);
+        psigp = psigp + TT.gammas[count]*0.5*(p1[j]*p2[i]/Grid::sqrt(p1sq*p2sq-pow(p1dotp2,2)));
+        psigp = psigp - TT.gammas[count]*Grid::QCD::Gamma(g5[0])*0.5*(p1[j]*p2[i]/Grid::sqrt(p1sq*p2sq-pow(p1dotp2,2)));
+        count++;
+        }
+    }
 
     VVpAAq.signs    = VVpAA.signs;
     for(int i=0;i<VVpAA.gammas.size();i++)
     { 
-        VVpAAq.gammas.push_back(rho*VVpAA.gammas[i]*(q[i%4]/Grid::sqrt(qsq)));
+        if(i>=4)
+        {
+            VVpAAq.gammas.push_back(qslash*(1.0/Grid::sqrt(qsq)));
+        }
+        else
+        {
+            VVpAAq.gammas.push_back(qslash*Grid::QCD::Gamma(g5[0])*(1.0/Grid::sqrt(qsq)));
+        }
     }
 
     // VVmAA
@@ -100,13 +129,14 @@ std::vector<DiracStructure> qslash_basis(std::vector<double> p1, std::vector<dou
 
     //TT
     TTq=TT;
-    int count=0;
     // j < i
+    count = 0;
     for(int i=0;i<Nd;i++)
-    for(int j=i+1;j<Nd;j++)
+        for(int j=i+1;j<Nd;j++)
     {
-        TTq.gammas[count] = TTq.gammas[count]*0.5*(p1[j]*p2[i]/Grid::sqrt(p1sq*p2sq-pow(p1dotp2,2)));
-        TTq.gammas[count] = TTq.gammas[count] - TTq.gammas[count]*Grid::QCD::Gamma(g5[0]);
+        //TTq.gammas[count] = TTq.gammas[count]*0.5*(p1[j]*p2[i]/Grid::sqrt(p1sq*p2sq-pow(p1dotp2,2)));
+        //TTq.gammas[count] = TTq.gammas[count] - TTq.gammas[count]*Grid::QCD::Gamma(g5[0]);
+        TTq.gammas[count] = psigp;
         count++;
     }
 

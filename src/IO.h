@@ -115,6 +115,56 @@ void save_result(std::string output_file, std::string label, T result)
 }
 
 template <typename T>
+void save_result(std::string output_file, std::vector<std::string> labels, std::vector<T> results)
+{
+    if(labels.size != results.size)
+    {
+        std::cout << "Error - there must be the same number of labels and results" << std::endl;
+    }
+    // Find the name of the path and create if doens't exist
+    size_t index = output_file.find_last_of("/");
+    std::string output_dir = output_file.substr(0,index);
+    mkdir(output_dir);
+
+    // Write hdf5 file
+    Grid::Hdf5Writer writer(output_file);
+    for(int i=0;i<labels.size();i++)
+    {
+        Grid::write(writer,labels[i],results[i]);
+    }
+}
+
+template <typename T>
+void save_result(std::string output_file, std::vector<std::vector<std::string>> labels, std::vector<std::vector<T>> results)
+{
+    if(labels.size != results.size)
+    {
+        std::cout << "Error - there must be the same number of labels and results" << std::endl;
+        exit(1);
+    }
+    // Find the name of the path and create if doens't exist
+    size_t index = output_file.find_last_of("/");
+    std::string output_dir = output_file.substr(0,index);
+    mkdir(output_dir);
+
+    // Write hdf5 file
+    Grid::Hdf5Writer writer(output_file);
+    for(int i=0;i<labels.size();i++)
+    {
+        if(labels[i].size != results[i].size())
+        {
+            std::cout << "Error - there must be the same number of labels and results" << std::endl;
+            exit(1);
+        }
+        for(int j=0;j<labels[i].size();j++)
+        {
+            Grid::write(writer,labels[i][j],results[i][j]);
+        }
+    }
+}
+
+
+template <typename T>
 void save_text(std::string output_file, std::string label, T result)
 {
     // Find the name of the path and create if doens't exist

@@ -17,5 +17,9 @@ const std::vector<Gamma::Algebra> sigma_mu_nu = {Gamma::Algebra::SigmaXY,Gamma::
 #define Nd              4
 #define Nop             5
 
-
+// From PDG physical constants 2018
+#define MZ              91.1876
+#define alphaMZ         0.1181
+#define Mb              4.18 //  using mh=mh(mh)
+#define Mc              1.28 //
 #endif

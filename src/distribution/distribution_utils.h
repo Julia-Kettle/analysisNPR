@@ -96,16 +96,23 @@ std::vector<std::vector<Distribution<double>>> get_matrix_distributions(Distribu
 
 ///////////////////jackknifing for vector of distributions///////////////////////
 template <typename T>
-std::vector<Distribution<T>> get_vector_jackknife(std::vector<Distribution<T>> vec_dist)
+std::vector<Distribution<T>> get_vector_resample(std::vector<Distribution<T>> vec_dist, std::string resampling, int nboot=0)
 {
     int count = 0;
-    std::vector<Distribution<T>> jackknife;
+    std::vector<Distribution<T>> resample;
     for ( auto elem : vec_dist )
     {
-        jackknife.push_back(elem.jackknife());
-        count++;
+        if(resampling == "jackknife")
+        {
+            resample.push_back(elem.jackknife());
+        }
+        else if(resampling == "bootstrap")
+        {
+            resample.push_back(elem.bootstrap(nboot));
+        }
+            count++;
     }
-    return jackknife;
+    return resample;
 }
 
 //////////////////////////////wrapper for eigen inversion//////////////////////////////

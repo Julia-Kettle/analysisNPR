@@ -1,5 +1,8 @@
+shell := /bin/bash
+
 # Use this utility to perform a make from the command-line using mpicc
 GRIDBASE  ?= $(shell grid-config --prefix)
+GSLBASE=/home/dp008/dp008/dc-kett1/install/gsl
 
 # grid-confic --cxx not working so hard code same compilers as grid
 CC=icc 
@@ -8,30 +11,32 @@ MPICXX=mpiicpci
 
 
 #CXX       := $(shell grid-config --cxx)
-CXXFLAGS  := $(shell grid-config --cxxflags) -I$(GRIDBASE)/include 
-LDLIBS    := $(shell grid-config --libs)    -lGrid 
-LDFLAGS   := $(shell grid-config --ldflags) -L$(GRIDBASE)/lib 
+CXXFLAGS  := $(shell grid-config --cxxflags) -I$(GRIDBASE)/include -I$(GSLBASE)/include 
+LDLIBS    := $(shell grid-config --libs)    -lGrid -lgsl 
+LDFLAGS   := $(shell grid-config --ldflags) -L$(GRIDBASE)/lib -L$(GSLBASE)/lib
 
-TARGET ?= bilinearAnalysis
+# set where source files are
 SRC_DIRS ?= ../src
+VPATH :=$(SRC_DIRS)
 
-SRCS := $(shell find $(SRC_DIRS) -name *.cc -or -name *.c -or -name *.s)
-OBJS := $(addsuffix .o,$(basename $(SRCS)))
-DEPS := $(OBJS:.o=.d)
+# define sources, objects and progs
+SRCFILES := $(shell find $(SRC_DIRS) -name *.cc )
+OBJFILES := $(notdir $(patsubst %.cc, %.o, $(SRCFILES)))
+PROGFILES:= $(notdir $(patsubst %.cc, %, $(SRCFILES)))
+
 
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
-
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP
 
-$(TARGET): $(OBJS)
-		$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LOADLIBES) $(LDLIBS)
+all: $(PROGFILES)
 
-.PHONY: clean
-	clean:
-		$(RM) $(TARGET) $(OBJS) $(DEPS)
+.PHONY: all clean
 
--include $(DEPS)
+all: $(PROGFILES)
+clean:
+	 $(RM) $(OBJFILES) $(PROGFILES) *~
+
 
 
 

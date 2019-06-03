@@ -49,6 +49,7 @@ class Distribution
         T               get_value(int index){ return this->values[index]; }
         T               get_mean(){ return this->mean; }
         size_t          get_Nmeas(){ return this->Nmeas; }
+        size_t          size(){ return this->values.size(); }
         std::string     get_resamplingType(){ return this->resampling; }
         T               get_central();
         // These may not work for certain types
